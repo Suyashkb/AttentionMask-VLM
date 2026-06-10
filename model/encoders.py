@@ -79,9 +79,7 @@ class FrozenTextEncoder(nn.Module):
         """
         x = self.token_embedding(tokens)                 # (B, 77, 768)
         x = x + self.positional_embedding
-        x = x.permute(1, 0, 2)                          # (77, B, 768)
         x = self.transformer(x, attn_mask=self.attn_mask)
-        x = x.permute(1, 0, 2)                          # (B, 77, 768)
         x = self.ln_final(x)
 
         token_embeds = x
