@@ -12,6 +12,10 @@ def contrastive_loss(img_cls, txt_cls, logit_scale):
     img_cls = F.normalize(img_cls, dim=-1)
     txt_cls = F.normalize(txt_cls, dim=-1)
 
+    # DataParallel gathers scalar logit_scale from N GPUs → shape (N,); reduce to scalar
+    if logit_scale.dim() > 0:
+        logit_scale = logit_scale.mean()
+
     # Similarity matrix: (B, B)
     logits = logit_scale * img_cls @ txt_cls.T
 
