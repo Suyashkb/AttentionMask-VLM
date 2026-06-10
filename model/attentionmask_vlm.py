@@ -62,11 +62,11 @@ class AttentionMaskVLM(nn.Module):
             patch_tokens, img_cls = self.image_encoder(images)  # (B,197,768), (B,512)
             text_tokens, txt_cls  = self.text_encoder(tokens)   # (B,77,512),  (B,512)
 
-        # Frozen encoders always run on cuda:0 under DataParallel (frozen params
-        # are not replicated). Move outputs to the device of the trainable gate.
-        dev = next(self.gate.parameters()).device
-        text_tokens = text_tokens.to(dev)
-        txt_cls     = txt_cls.to(dev)
+        # Frozen encoders may run on cuda:0 under DataParallel. Move outputs to
+        # the device that DataParallel assigned this replica's input batch to.
+        dev = images.device
+        text_tokens  = text_tokens.to(dev)
+        txt_cls      = txt_cls.to(dev)
         patch_tokens = patch_tokens.to(dev)
         img_cls      = img_cls.to(dev)
 
