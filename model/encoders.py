@@ -51,22 +51,19 @@ class FrozenImageEncoder(nn.Module):
 class FrozenTextEncoder(nn.Module):
     """
     CLIP text encoder. Returns token embeddings + projected CLS.
+    Uses open_clip's own encode_text pipeline with a hook to capture
+    all token embeddings — avoids fragile internal transformer API calls.
     """
     def __init__(self, clip_model_name="ViT-B-16", pretrained="openai"):
         super().__init__()
         model, _, _ = open_clip.create_model_and_transforms(
             clip_model_name, pretrained=pretrained
         )
-        self.transformer   = model.transformer
-        self.token_embedding = model.token_embedding
-        self.positional_embedding = model.positional_embedding
-        self.ln_final      = model.ln_final
-        self.text_projection = model.text_projection
-        self.attn_mask     = model.attn_mask
+        self.model = model
         self._freeze()
 
     def _freeze(self):
-        for p in self.parameters():
+        for p in self.model.parameters():
             p.requires_grad = False
 
     def forward(self, tokens):
@@ -77,14 +74,14 @@ class FrozenTextEncoder(nn.Module):
             token_embeds: (B, 77, 768)
             cls_embed:    (B, 512)   — projected EOS token for contrastive
         """
-        x = self.token_embedding(tokens)                 # (B, 77, 768)
-        x = x + self.positional_embedding
-        x = self.transformer(x, attn_mask=self.attn_mask)
-        x = self.ln_final(x)
+        captured = {}
 
-        token_embeds = x
-        # EOS position = argmax of token id (CLIP convention)
-        eos_pos = tokens.argmax(dim=-1)
-        cls_embed = x[torch.arange(x.shape[0]), eos_pos] @ self.text_projection
+        def _hook(module, inp, out):
+            captured['token_embeds'] = out  # (B, 77, 768) after ln_final
 
+        handle = self.model.ln_final.register_forward_hook(_hook)
+        cls_embed = self.model.encode_text(tokens)       # (B, 512)
+        handle.remove()
+
+        token_embeds = captured['token_embeds']          # (B, 77, 768)
         return token_embeds, cls_embed
