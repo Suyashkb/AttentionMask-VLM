@@ -9,7 +9,8 @@ data:
 model:
   clip_model: "ViT-B-16"
   clip_pretrained: "openai"
-  embed_dim: 768
+  embed_dim: 768           # visual patch token dim (ViT-B/16)
+  text_embed_dim: 512     # CLIP text transformer hidden dim (ViT-B/16)
   num_heads: 8               # cross-attention heads in gate
   mask_ratio: 0.25           # fraction of patches to mask (k/196)
   mask_token_dim: 768        # learned [MASK] embedding dim

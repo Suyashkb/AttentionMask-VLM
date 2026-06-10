@@ -24,7 +24,8 @@ class AttentionMaskVLM(nn.Module):
 
         # Trainable components
         self.gate = CrossAttentionGate(
-            embed_dim=cfg.model.embed_dim,
+            query_dim=cfg.model.embed_dim,       # 768 — visual patch dim
+            kv_dim=cfg.model.text_embed_dim,     # 512 — CLIP text transformer dim
             num_heads=cfg.model.num_heads
         )
         self.mask_selector = MaskSelector(

@@ -11,19 +11,19 @@ class CrossAttentionGate(nn.Module):
     This is the core novel component. It identifies which image patches
     are most semantically aligned with the text description.
     """
-    def __init__(self, embed_dim=768, num_heads=8, dropout=0.1):
+    def __init__(self, query_dim=768, kv_dim=512, num_heads=8, dropout=0.1):
         super().__init__()
         self.num_heads   = num_heads
-        self.head_dim    = embed_dim // num_heads
+        self.head_dim    = query_dim // num_heads
         self.scale       = self.head_dim ** -0.5
 
-        # Learnable projections — these are the primary trainable params
-        self.W_q = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.W_k = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.W_v = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.W_o = nn.Linear(embed_dim, embed_dim, bias=False)
+        # Q from image patches (query_dim=768), K/V from text tokens (kv_dim=512)
+        self.W_q = nn.Linear(query_dim, query_dim, bias=False)
+        self.W_k = nn.Linear(kv_dim,    query_dim, bias=False)
+        self.W_v = nn.Linear(kv_dim,    query_dim, bias=False)
+        self.W_o = nn.Linear(query_dim, query_dim, bias=False)
         self.dropout = nn.Dropout(dropout)
-        self.norm = nn.LayerNorm(embed_dim)
+        self.norm = nn.LayerNorm(query_dim)
 
     def forward(self, patch_tokens, text_tokens):
         """
