@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 import wandb
 from tqdm import tqdm
@@ -51,7 +51,7 @@ def train_one_epoch(model, loader, optimizer, scheduler, scaler, cfg, epoch, dev
 
         optimizer.zero_grad()
 
-        with autocast(enabled=cfg.training.fp16):
+        with autocast("cuda", enabled=cfg.training.fp16):
             outputs = model(images, tokens)
             l_total, l_contrastive, l_mim = total_loss(outputs, cfg)
 
@@ -108,7 +108,7 @@ def train(cfg):
     train_loader, val_loader = build_dataloaders(cfg)
     optimizer  = get_optimizer(model, cfg)
     scheduler  = get_scheduler(optimizer, cfg, len(train_loader))
-    scaler     = GradScaler(enabled=cfg.training.fp16)
+    scaler     = GradScaler("cuda", enabled=cfg.training.fp16)
 
     best_r1 = 0.0
     os.makedirs(cfg.paths.output_dir, exist_ok=True)
