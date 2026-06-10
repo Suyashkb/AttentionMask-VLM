@@ -95,7 +95,7 @@ def train_one_epoch(model, loader, optimizer, scheduler, scaler, cfg, epoch, dev
 def train(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    wandb.init(project=cfg.paths.wandb_project, config=dict(cfg))
+    wandb.init(project=cfg.paths.wandb_project, config=_namespace_to_dict(cfg))
 
     model = AttentionMaskVLM(cfg).to(device)
     model.count_trainable_params()
@@ -142,6 +142,13 @@ def _nested_namespace(d):
     if isinstance(d, dict):
         return SimpleNamespace(**{k: _nested_namespace(v) for k, v in d.items()})
     return d
+
+
+def _namespace_to_dict(ns):
+    """Recursively convert SimpleNamespace back to a plain dict (e.g. for wandb)."""
+    if isinstance(ns, SimpleNamespace):
+        return {k: _namespace_to_dict(v) for k, v in vars(ns).items()}
+    return ns
 
 
 def load_config(path):
