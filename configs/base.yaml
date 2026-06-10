@@ -1,0 +1,31 @@
+data:
+  dataset: "mscoco"          # mscoco | cc3m | rsicd
+  data_dir: "/kaggle/input/coco-2017"
+  image_size: 224
+  batch_size: 256
+  num_workers: 4
+  max_text_len: 77
+
+model:
+  clip_model: "ViT-B-16"
+  clip_pretrained: "openai"
+  embed_dim: 768
+  num_heads: 8               # cross-attention heads in gate
+  mask_ratio: 0.25           # fraction of patches to mask (k/196)
+  mask_token_dim: 768        # learned [MASK] embedding dim
+
+training:
+  epochs: 10
+  lr: 3e-4
+  weight_decay: 0.01
+  warmup_steps: 500
+  lambda_contrastive: 0.5    # weight on contrastive loss
+  lambda_mim: 1.0            # weight on MIM loss
+  grad_clip: 1.0
+  fp16: true
+  log_every: 50
+  eval_every: 1              # eval every epoch
+
+paths:
+  output_dir: "/kaggle/working/checkpoints"
+  wandb_project: "attentionmask-vlm"
